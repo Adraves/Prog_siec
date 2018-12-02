@@ -28,45 +28,76 @@ namespace POP3_client
         
         public byte[] data;
         public string CRLF = "\r\n";
-        
 
-        public string Connect(string server, string login, string pass, int port)
+        public string Connect(string server, int port)
         {
-            string s;
-            string mes = string.Empty;
             client = new TcpClient(server, port);
             client.ReceiveTimeout = 5000;
             try
             {
-                
+
                 networkStream = client.GetStream();
                 streamReader = new StreamReader(networkStream);
 
                 state = connectState.AUTHORISATION;
 
-                mes += streamReader.ReadLine()+CRLF;
-                s = send("USER " + login);
-                mes += s + " login ok" + CRLF;
-                
-                s = send("PASS " + pass);
-                mes += s + " pasy ok" + CRLF;
-
-                s = send("STAT");
-                mes += s + CRLF;
-
-                state = connectState.TRANSACTION;
-
-                return mes;
-
+                return (streamReader.ReadLine()+CRLF);
             }
-            catch(Exception err)
+            catch (Exception err)
             {
                 return ("Error: " + err.ToString());
             }
-            
         }
 
-        public string send (string message)
+        public string USER(string login)
+        {
+            string temp;
+            if(state!=connectState.AUTHORISATION)
+            {
+                temp = "Not in AUTHENTICATION";
+            }
+            else
+            {
+                temp = send("USER " + login);
+            }
+            return temp+CRLF;
+        }
+        public string PASS(string pass)
+        {
+            string temp;
+            if (state != connectState.AUTHORISATION)
+            {
+                temp = "Not in AUTHENTICATION";
+            }
+            
+            else
+            {
+                temp = send("PASS " + pass);
+                if (temp.StartsWith("+"))
+                {
+                    state = connectState.TRANSACTION;
+                }
+                else temp = "Error during PASS command";
+            }
+            return temp + CRLF;
+        }
+        public string STAT()
+        {
+            string temp;
+            if (state != connectState.TRANSACTION)
+            {
+                temp = "Not in TRANSACTION";
+            }
+            else
+            {
+                temp = send("STAT");
+            }
+            return temp + CRLF;
+        }
+
+        
+
+        public string send(string message)
         {
             try
             {
@@ -100,61 +131,30 @@ namespace POP3_client
                 return "-ERR " + err.ToString();
             }
         }
-
-
-
+        
         public string QUIT()
         {
-            send("QUIT" + CRLF);
-            string temp = string.Empty;
-            temp += streamReader.ReadLine();
+            string temp;
+ 
+            temp = send("QUIT" + CRLF);
+            if (state == connectState.TRANSACTION)
+            {
+                state = connectState.UPDATE;
+            }
+            else if (state == connectState.AUTHORISATION)
+            {
+                state = connectState.disconnect;
+            }
             networkStream.Close();
             streamReader.Close();
+            
+            
 
-            return temp;
+            return temp + CRLF;
         }
-        public string STAT()
-        {
-            string temp;
-            if (state != connectState.TRANSACTION)
-            {
-                temp = "Not in TRANSACTION state";
-            }
-            else
-            {
-                send("STAT");
-                temp = streamReader.ReadLine();
-            }
-            return temp;
-        }
-        public string LIST()
-        {
-            string temp;
-            if (state != connectState.TRANSACTION)
-            {
-                temp = "Not in TRANSACTION state";
-            }
-            else
-            {
-                send("LIST" + CRLF);
-                temp = streamReader.ReadToEnd();
-            }
-            return temp;
-        }
-        public string LIST(string number)
-        {
-            string temp;
-            if (state != connectState.TRANSACTION)
-            {
-                temp = "Not in TRANSACTION state";
-            }
-            else
-            {
-                send("LIST " + number +  CRLF);
-                temp = streamReader.ReadLine();
-            }
-            return temp;
-        }
+
+       
+        
         public string RETR(string number)
         {
             string temp;

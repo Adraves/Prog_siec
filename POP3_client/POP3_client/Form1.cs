@@ -51,15 +51,18 @@ namespace POP3_client
 
         private void buttonConnect_Click(object sender, EventArgs e)
         {
-            CommandWindow.Text += login.Connect(configData.server, configData.login, configData.pass, configData.port);
-            
-            
+            CommandWindow.Text += login.Connect(configData.server, configData.port);
+            CommandWindow.Text += login.USER(configData.login);
+            CommandWindow.Text += login.PASS(configData.pass);
             timer1.Interval = configData.refreshRate*1000;
-            timer1.Start();
-            
-            buttonConnect.Enabled = false;
-            buttonDisconnect.Enabled = true;
-            buttonConfig.Enabled = false;
+            if (login.state == POP3.connectState.TRANSACTION)
+            {
+                timer1.Start();
+
+                buttonConnect.Enabled = false;
+                buttonDisconnect.Enabled = true;
+                buttonConfig.Enabled = false;
+            }
         }
 
         private void buttonDisconnect_Click(object sender, EventArgs e)
