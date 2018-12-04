@@ -43,9 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="B64.cs" />
     <Compile Include="Mail.cs" />
-    <Compile Include="POP3.cs" />
     <Compile Include="SMTP.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
